@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 
 namespace Cryptosoft
 {
@@ -7,33 +8,55 @@ namespace Cryptosoft
         public string EncryptingKey { get; set; }
         public string SourceEncryptPath { get; set; }
         public string TargetEncryptPath { get; set; }
-
         public string TargetDecryptPath { get; set; }
 
-        public Encrypt() 
+        public Encrypt()
         {
-            GenerateEncryptingkey();
+            LoadConfiguration();
         }
-        public void GenerateEncryptingkey()
+        private void LoadConfiguration()
         {
-            Random random = new Random();
-            EncryptingKey = "";
-            for (int i = 0; i < 128; i++)
+            try
             {
-                EncryptingKey += random.Next(2);
+                string configFile = "encryptionConfig.json";
+                if (File.Exists(configFile))
+                {
+                    string json = File.ReadAllText(configFile);
+                    EncryptConfig config = JsonSerializer.Deserialize<EncryptConfig>(json);
+
+                    EncryptingKey = config.EncryptingKey;
+                }
+                else
+                {
+                    Console.WriteLine("Configuration file not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading configuration: {ex.Message}");
             }
         }
+
         public void EncryptData()
         {
-            if (File.Exists(SourceEncryptPath))
+            if (Directory.Exists(TargetEncryptPath))
             {
-                EncryptFile(SourceEncryptPath);
-                Console.WriteLine("Encryption completed successfully.");
+                if (File.Exists(SourceEncryptPath))
+                {
+                    EncryptFile(SourceEncryptPath);
+                    Console.WriteLine("Encryption completed successfully.");
+                }
+                else if (Directory.Exists(SourceEncryptPath))
+                    EncryptDirectory();
+
+                else
+                    Console.WriteLine("The specified source path does not exist.");
             }
-            else if (Directory.Exists(SourceEncryptPath))
+            else
             {
-                EncryptDirectory();
+                Console.WriteLine("The specified target path does not exist.");
             }
+
         }
         public void EncryptDirectory()
         {
@@ -70,21 +93,29 @@ namespace Cryptosoft
         }
         public void DecryptFiles()
         {
-            string[] encryptedFiles = Directory.GetFiles(TargetDecryptPath);
-
-            foreach (string encryptedFilePath in encryptedFiles)
+            if (Directory.Exists(TargetDecryptPath))
             {
-                byte[] encryptedContent = File.ReadAllBytes(encryptedFilePath);
+                string[] encryptedFiles = Directory.GetFiles(TargetDecryptPath);
 
-                byte[] decryptedContent = Decrypt(encryptedContent);
+                foreach (string encryptedFilePath in encryptedFiles)
+                {
+                    byte[] encryptedContent = File.ReadAllBytes(encryptedFilePath);
 
-                string decryptedFileName = Path.GetFileName(encryptedFilePath);
-                string decryptedFilePath = Path.Combine(TargetDecryptPath, decryptedFileName);
+                    byte[] decryptedContent = Decrypt(encryptedContent);
 
-                File.WriteAllBytes(decryptedFilePath, decryptedContent);
+                    string decryptedFileName = Path.GetFileName(encryptedFilePath);
+                    string decryptedFilePath = Path.Combine(TargetDecryptPath, decryptedFileName);
 
-                Console.WriteLine($"Decryption completed. File saved at: {decryptedFilePath}");
+                    File.WriteAllBytes(decryptedFilePath, decryptedContent);
+
+                    Console.WriteLine($"Decryption completed. File saved at: {decryptedFilePath}");
+                }
             }
+            else
+            {
+                Console.WriteLine("The specified path does not exist.");
+            }
+
         }
 
         public byte[] Decrypt(byte[] data)

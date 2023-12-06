@@ -3,63 +3,53 @@
 Encrypt encrypt = new Encrypt();
 bool run = true;
 Console.WriteLine("Welcome to Cryptosoft !");
-while (run)
+try
 {
-    try
+    if (args.Length == 2)
     {
-        Console.WriteLine("Choose an option :");
-        Console.WriteLine("1. Encrypt files");
-        Console.WriteLine("2. Decrypt files");
-        string choice = Console.ReadLine();
-        switch (choice)
+        string action = args[0];
+        encrypt.TargetDecryptPath = args[1];
+        encrypt.TargetDecryptPath = encrypt.ConvertToLocalUNC(encrypt.TargetDecryptPath);
+        switch (action)
         {
-            case "1":
-                Console.WriteLine("Encrypting files...");
-                EncryptView();
-                break;
-            case "2":
-                Console.WriteLine("Decrypting files...");
-                DecryptView();
+            case "-d":
+                encrypt.DecryptFiles();
                 break;
             default:
-                Console.WriteLine("Invalid choice. Please enter 1 or 2.");
+                ShowUsage();
                 break;
         }
+        
     }
-    catch (Exception ex)
+    else if (args.Length == 3)
     {
-        Console.WriteLine($"Error : {ex.Message}");
+        string action = args[0];
+        encrypt.SourceEncryptPath = args[1];
+        encrypt.TargetEncryptPath = args[2];
+        encrypt.SourceEncryptPath = encrypt.ConvertToLocalUNC(encrypt.SourceEncryptPath);
+        encrypt.TargetEncryptPath = encrypt.ConvertToLocalUNC(encrypt.TargetEncryptPath);
+        switch (action)
+        {
+            case "-e":
+                encrypt.EncryptData();
+                break;
+            default:
+                ShowUsage();
+                break;
+        }      
     }
+    else
+    {
+        ShowUsage();
+    }
+} 
+catch (Exception ex)
+{
+    Console.WriteLine($"Error : {ex}");
 }
 
-void EncryptView()
+void ShowUsage()
 {
-    Console.WriteLine("Choose the path of the file or folder you want to encrypt :");
-    encrypt.SourceEncryptPath = Console.ReadLine();
-    encrypt.SourceEncryptPath = encrypt.ConvertToLocalUNC(encrypt.SourceEncryptPath);
-    Console.WriteLine("Choose the path of the folder where you want to have the result :");
-    encrypt.TargetEncryptPath = Console.ReadLine();
-    encrypt.TargetEncryptPath = encrypt.ConvertToLocalUNC(encrypt.TargetEncryptPath);
-    if (File.Exists(encrypt.SourceEncryptPath) || Directory.Exists(encrypt.SourceEncryptPath))
-    {
-        encrypt.EncryptData();
-    }
-    else
-    {
-        Console.WriteLine("Le chemin spécifié n'existe pas.");
-    }
-}
-void DecryptView()
-{
-    Console.WriteLine("Choose the path of the file or folder you want to decrypt :");
-    encrypt.TargetDecryptPath = Console.ReadLine();
-    encrypt.TargetDecryptPath = encrypt.ConvertToLocalUNC(encrypt.TargetDecryptPath);
-    if (Directory.Exists(encrypt.TargetDecryptPath))
-    {
-        encrypt.DecryptFiles();
-    }
-    else
-    {
-        Console.WriteLine("Le chemin spécifié n'existe pas.");
-    }
+    Console.WriteLine("Cryptosoft.exe -e <source_path> <target_path> to encrypt");
+    Console.WriteLine("Or Cryptosoft.exe -d <target_path> to decrypt");
 }

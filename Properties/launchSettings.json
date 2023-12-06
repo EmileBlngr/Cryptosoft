@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Cryptosoft": {
+      "commandName": "Project",
+      "commandLineArgs": "-e C:\\source C:\\target"
+    }
+  }
+}
